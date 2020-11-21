@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <script src="./echarts.min.js"></script>
+    <script src="./numjs.min.js"></script>
+    <style>
+      @font-face {
+        font-family: "IBM Plex Mono";
+        font-style: normal;
+        src: url("https://mystaidemo.wpengine.com/wp-content/themes/myst/font/IBMPlexMono-Regular.ttf")
+          format("truetype");
+      }
+
+      @font-face {
+        font-family: "IBM Plex Mono";
+        font-style: normal;
+        font-weight: 500;
+        src: url("https://mystaidemo.wpengine.com/wp-content/themes/myst/font/IBMPlexMono-Medium.ttf")
+          format("truetype");
+      }
+
+      @font-face {
+        font-family: "IBM Plex Mono";
+        font-style: normal;
+        font-weight: bold;
+        src: url("https://mystaidemo.wpengine.com/wp-content/themes/myst/font/IBMPlexMono-Bold.ttf")
+          format("truetype");
+      }
+
+      @font-face {
+        font-family: "Montserrat";
+        font-style: normal;
+        src: url("https://mystaidemo.wpengine.com/wp-content/themes/myst/font/Montserrat-Regular.ttf")
+          format("truetype");
+      }
+      @font-face {
+        font-family: "Montserrat";
+        font-style: normal;
+        font-weight: 300;
+        src: url("https://mystaidemo.wpengine.com/wp-content/themes/myst/font/Montserrat-Light.ttf")
+          format("truetype");
+      }
+      @font-face {
+        font-family: "Montserrat";
+        font-style: normal;
+        font-weight: 500;
+        src: url("https://mystaidemo.wpengine.com/wp-content/themes/myst/font/Montserrat-Medium.ttf")
+          format("truetype");
+      }
+
+      @font-face {
+        font-family: "Space Mono";
+        font-style: normal;
+        src: url("https://mystaidemo.wpengine.com/wp-content/themes/myst/font/SpaceMono-Regular.ttf")
+          format("truetype");
+      }
+
+      #main {
+        width: 100%;
+        height: 400px;
+        border-bottom: 1px solid #ebebeb;
+      }
+      .chart-container {
+        max-width: 1200px;
+        margin: auto;
+      }
+      .chart-number {
+        display: flex;
+        justify-content: space-between;
+      }
+      .cn-title {
+        font-family: "IBM Plex Mono";
+        font-style: normal;
+        font-weight: 500;
+        font-size: 14px;
+        line-height: 22px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        color: #5200ff;
+        margin-top: 10px;
+      }
+      .cn-point {
+        font-family: "IBM Plex Mono";
+        font-style: normal;
+        font-weight: bold;
+        font-size: 80px;
+        line-height: 80px;
+        color: #5200ff;
+        display: flex;
+        align-items: center;
+      }
+      .cn-arrow {
+        height: 58px;
+      }
+      .cn-unit {
+        font-family: "Space Mono";
+        font-style: normal;
+        font-weight: normal;
+        font-size: 30px;
+        color: #5200ff;
+        height: 58px;
+        display: flex;
+        align-items: end;
+      }
+      .cn-desc {
+        font-family: "Montserrat";
+        font-style: normal;
+        font-weight: normal;
+        font-size: 14px;
+        line-height: 22px;
+        color: #6c727c;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        margin-left: 40px;
+      }
+      .b-tag-desc {
+        color: #6c727c;
+      }
+
+      .cn-tag {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+
+      .b-tag-normal {
+        font-family: "IBM Plex Mono";
+        font-style: normal;
+        font-weight: 500;
+        font-size: 14px;
+        line-height: 22px;
+        text-align: right;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        color: #6c727c;
+        margin-top: 10px;
+      }
+      .b-tag-active {
+        color: #5200ff;
+      }
+      .b-tag {
+        margin-left: 30px;
+        font-family: "IBM Plex Mono";
+        font-style: normal;
+        font-weight: 500;
+        font-size: 14px;
+        line-height: 44px;
+        text-align: right;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        color: #5200ff;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="chart-container">
+      <div id="main"></div>
+      <div class="chart-number">
+        <div class="cn-left">
+          <div class="cn-title">AS OF <span class="cn-time">2PM</span></div>
+          <div class="cn-point">
+            <span class="cn-number">70,4</span>
+            <div class="cn-unit">kWh</div>
+            <img
+              class="cn-arrow"
+              src="https://mystaidemo.wpengine.com/wp-content/themes/myst/img/arrow-top.svg"
+            />
+          </div>
+        </div>
+        <div class="cn-tag">
+          <div class="b-tag-normal b-tag-active">
+            historical energy consumption
+          </div>
+          <div class="b-tag-normal">FORECASTING USING 4 MODELS</div>
+        </div>
+      </div>
+    </div>
+    <script>
+      var originData = [
+        ["6/10/2019 12:00", 95000],
+        ["6/10/2019 13:00", 93000],
+        ["6/10/2019 14:00", 93000],
+        ["6/10/2019 15:00", 94000],
+        ["6/10/2019 16:00", 96000],
+        ["6/10/2019 17:00", 96000],
+        ["6/10/2019 18:00", 100000],
+        ["6/10/2019 19:00", 103000],
+        ["6/10/2019 20:00", 105000],
+        ["6/10/2019 21:00", 108000],
+        ["6/10/2019 22:00", 103000],
+        ["6/10/2019 23:00", 94000],
+        ["6/11/2019 00:00", 85000],
+        ["6/11/2019 01:00", 81000],
+        ["6/11/2019 02:00", 79000],
+        ["6/11/2019 03:00", 79000],
+        ["6/11/2019 04:00", 80000],
+        ["6/11/2019 05:00", 82000],
+        ["6/11/2019 06:00", 89000],
+        ["6/11/2019 07:00", 97000],
+        ["6/11/2019 08:00", 101000],
+        ["6/11/2019 09:00", 100000],
+        ["6/11/2019 10:00", 100000],
+        ["6/11/2019 11:00", 95000],
+        ["6/11/2019 12:00", 94000],
+        ["6/11/2019 13:00", 94000],
+        ["6/11/2019 14:00", 94000],
+        ["6/11/2019 15:00", 95000],
+        ["6/11/2019 16:00", 98000],
+        ["6/11/2019 17:00", 98000],
+        ["6/11/2019 18:00", 102000],
+        ["6/11/2019 19:00", 105000],
+        ["6/11/2019 20:00", 105000],
+        ["6/11/2019 21:00", 108000],
+        ["6/11/2019 22:00", 103000],
+        ["6/11/2019 23:00", 94000],
+        ["6/12/2019 00:00", 86000],
+        ["6/12/2019 01:00", 82000],
+        ["6/12/2019 02:00", 79000],
+        ["6/12/2019 03:00", 78000],
+        ["6/12/2019 04:00", 78000],
+        ["6/12/2019 05:00", 81000],
+        ["6/12/2019 06:00", 88000],
+        ["6/12/2019 07:00", 95000],
+        ["6/12/2019 08:00", 99000],
+        ["6/12/2019 09:00", 98000],
+        ["6/12/2019 10:00", 98000],
+        ["6/12/2019 11:00", 98000],
+        ["6/12/2019 12:00", 97000],
+        ["6/12/2019 13:00", 96000],
+        ["6/12/2019 14:00", 96000],
+        ["6/12/2019 15:00", 97000],
+        ["6/12/2019 16:00", 99000],
+        ["6/12/2019 17:00", 101000],
+        ["6/12/2019 18:00", 104000],
+        ["6/12/2019 19:00", 106000],
+        ["6/12/2019 20:00", 107000],
+        ["6/12/2019 21:00", 110000],
+        ["6/12/2019 22:00", 104000],
+        ["6/12/2019 23:00", 94000],
+        ["6/13/2019 00:00", 85000],
+        ["6/13/2019 01:00", 80000],
+        ["6/13/2019 02:00", 77000],
+        ["6/13/2019 03:00", 77000],
+        ["6/13/2019 04:00", 76000],
+        ["6/13/2019 05:00", 78000],
+        ["6/13/2019 06:00", 84000],
+        ["6/13/2019 07:00", 93000],
+        ["6/13/2019 08:00", 98000],
+        ["6/13/2019 09:00", 97000],
+        ["6/13/2019 10:00", 98000],
+        ["6/13/2019 11:00", 99000],
+        ["6/13/2019 12:00", 99000],
+      ];
+
+      var myChart = echarts.init(document.getElementById("main"));
+      var height = 400;
+      var gap = 40;
+      var strokeWidth = 1;
+      var isDragging = false;
+      var lineColor = "#5200FF";
+      var lineColor2 = "rgba(94, 0, 255, 0.3)";
+      var handleSize = 82;
+      var times = originData.map((i) => i[0]);
+      var seeds = originData.map((i) => i[1]);
+      var offset_ratios = [-1.5, -0.5, 0.5, 1.5];
+      var values = matrixTransform(seeds, offset_ratios);
+      var data = values.map((value, setIndex) =>
+        value.map((el, index) => [times[index], el])
+      );
+      var $p = originData.findIndex(
+        (i) => new Date(i[0]).getHours() === new Date().getHours()
+      );
+
+      var option = {
+        animation: true,
+        tooltip: {
+          // triggerOn: "none",
+          trigger: "axis",
+          backgroundColor: "rgba(245, 245, 245, 0.8)",
+          padding: 10,
+          textStyle: {
+            color: "#5200FF",
+          },
+          formatter: (params) => {
+            return `AT ${formatLabelTime(params[0].axisValue)}${params
+              .map(
+                ({ value, seriesName }) => `<br/>${seriesName}: ${value[1]}kWh`
+              )
+              .join("")}`;
+          },
+        },
+        xAxis: {
+          type: "category",
+          axisPointer: {
+            value: "6/11/2019 14:00",
+            snap: true,
+            lineStyle: {
+              color: "#6C727C",
+              opacity: 0.5,
+              width: 1,
+              type: "dashed",
+            },
+            itemStyle: { color: "#6C727C" },
+            // label: {
+            //   show: true,
+            //   formatter: function (params) {
+            //     return params.value;
+            //   },
+            //   backgroundColor: "#004E52",
+            // },
+            // handle: {
+            //   show: true,
+            // },
+          },
+          splitLine: {
+            show: false,
+          },
+          axisLabel: false,
+          axisLine: false,
+          axisTick: false,
+        },
+        yAxis: {
+          type: "value",
+          boundaryGap: [0, "100%"],
+          show: false,
+          splitLine: {
+            show: false,
+          },
+          min: function (value) {
+            return value.min * 0.9;
+          },
+          max: function (value) {
+            return value.max * 1.1;
+          },
+        },
+        grid: {
+          left: 0,
+          top: gap,
+          right: 0,
+          bottom: gap,
+        },
+        series: genSeries($p),
+      };
+
+      function matrixTransform(s, o) {
+        return o.map((offset_ratio, index) =>
+          nj
+            .array(s)
+            .add(
+              nj
+                .arange(s.length)
+                .multiply(offset_ratio)
+                .multiply(nj.random(s.length).multiply(70).add(45))
+            )
+            .tolist()
+        );
+      }
+
+      function genSeries($p) {
+        var dataSets = values.map((value, setIndex) =>
+          value.map((el, index) => ({
+            name: times[index],
+            value: [
+              times[index],
+              Math.round($p - 1 === index ? values[0][index] : el),
+            ],
+          }))
+        );
+        var series = [
+          {
+            name: "History",
+            type: "line",
+            showSymbol: false,
+            hoverAnimation: false,
+            lineStyle: {
+              color: "#5200FF",
+              width: strokeWidth,
+            },
+            // symbolSize: 200,
+            data: dataSets[0].filter((el, i) => i < $p),
+          },
+          {
+            name: "Forecasting1",
+            type: "line",
+            showSymbol: false,
+            hoverAnimation: false,
+            lineStyle: {
+              color: "#BCC1C9",
+              width: strokeWidth,
+            },
+            data: dataSets[1].filter((el, i) => i >= $p - 1),
+          },
+          {
+            name: "Forecasting2",
+            type: "line",
+            showSymbol: false,
+            hoverAnimation: false,
+            lineStyle: {
+              color: "#BCC1C9",
+              width: strokeWidth,
+            },
+            data: dataSets[2].filter((el, i) => i >= $p - 1),
+          },
+          {
+            name: "Forecasting3",
+            type: "line",
+            showSymbol: false,
+            hoverAnimation: false,
+            lineStyle: {
+              color: "#BCC1C9",
+              width: strokeWidth,
+            },
+            data: dataSets[3].filter((el, i) => i >= $p - 1),
+          },
+        ];
+        return series;
+      }
+
+      function drawGraphic() {
+        // Add shadow circles (which is not visible) to enable drag.
+
+        var cord = myChart.convertToPixel("grid", data[0][$p - 1]);
+        if (cord[0] === undefined) return;
+        // console.log("x,y", x, y);
+        myChart.setOption({
+          graphic: [
+            {
+              type: "image",
+              position: cord,
+              style: {
+                // fill: "#5200FF",
+                image: "./handle.svg",
+                width: handleSize,
+                height: handleSize,
+                x: -handleSize / 2,
+                y: -handleSize / 2,
+              },
+              invisible: false,
+              draggable: true,
+              ondrag: onPointDragging,
+              ondragend: onPointDragEnd,
+              ondragstart: onPointDragStart,
+              z: 100,
+              zlevel: 100,
+            },
+            {
+              type: "line",
+              shape: {
+                x1: cord[0],
+                y1: gap,
+                x2: cord[0],
+                y2: height - gap,
+              },
+              style: { stroke: lineColor, lineWidth: strokeWidth },
+              invisible: false,
+              draggable: false,
+            },
+            {
+              type: "text",
+              position: [cord[0] - 10, height - gap + 10],
+              bounding: "all",
+              style: {
+                text: formatLabelTime(data[0][$p - 1][0]),
+                fill: lineColor,
+              },
+              font: "IBM Plex Mono",
+              invisible: false,
+              draggable: false,
+            },
+            {
+              type: "circle",
+              position: [cord[0], gap],
+              shape: {
+                cx: 0,
+                cy: 0,
+                r: 3,
+              },
+              style: {
+                fill: "#5200FF",
+              },
+              invisible: false,
+              draggable: true,
+            },
+            {
+              type: "circle",
+              position: [cord[0], height - gap],
+              shape: {
+                cx: 0,
+                cy: 0,
+                r: 3,
+              },
+              style: {
+                fill: "#5200FF",
+              },
+              invisible: false,
+              draggable: true,
+            },
+          ],
+        });
+      }
+
+      function formatLabelTime(timestr) {
+        const hour = new Date(timestr).getHours();
+        return hour > 12 ? hour - 12 + "PM" : hour + "AM";
+      }
+
+      function onPointDragEnd() {
+        isDragging = false;
+        var cord = myChart.convertToPixel("grid", data[0][$p]);
+        myChart.setOption({
+          graphic: [{ invisible: false }, {}],
+        });
+        if (cord[0] === undefined) return;
+        myChart.setOption({
+          xAxis: { axisPointer: { show: true } },
+          graphic: [
+            { position: cord },
+            { style: { stroke: lineColor } },
+            { style: { fill: lineColor } },
+            { style: { fill: lineColor } },
+            { style: { fill: lineColor } },
+          ],
+        });
+
+        updateNumber();
+      }
+
+      function onPointDragStart() {
+        isDragging = true;
+        myChart.setOption({
+          xAxis: { axisPointer: { show: false } },
+          graphic: [
+            { invisible: true },
+            { style: { stroke: lineColor2 } },
+            { style: { fill: lineColor2 } },
+            { style: { fill: lineColor2 } },
+            { style: { fill: lineColor2 } },
+          ],
+        });
+      }
+
+      function onPointDragging() {
+        var [xIndex] = myChart.convertFromPixel("grid", this.position);
+        isDragging = true;
+        // console.log("xIndex", xIndex);
+        if (xIndex === $p) return;
+        if (xIndex < 0) {
+          $p = 0;
+        } else if (xIndex > originData.length) {
+          $p = originData.length;
+        } else {
+          $p = xIndex;
+        }
+        var cord = myChart.convertToPixel("grid", data[0][$p]);
+        if (cord[0] === undefined) return;
+
+        myChart.setOption({
+          graphic: [
+            {},
+            {
+              shape: {
+                x1: cord[0],
+                x2: cord[0],
+              },
+            },
+            {
+              position: [cord[0] - 10, height - gap + 10],
+              style: { text: formatLabelTime(data[0][$p][0]) },
+            },
+            { position: [cord[0], gap] },
+            { position: [cord[0], height - gap] },
+          ],
+          series: genSeries($p + 1),
+        });
+        updateNumber();
+      }
+
+      function updateNumber() {
+        document.querySelector(
+          ".cn-number"
+        ).innerText = Number.prototype.toLocaleString.apply(
+          data[0][$p - 1][1] | 0
+        );
+        document.querySelector(".cn-time").innerText = formatLabelTime(
+          data[0][$p - 1][0]
+        );
+      }
+
+      myChart.setOption(option);
+
+      window.addEventListener("resize", function () {
+        drawGraphic();
+        myChart.resize();
+      });
+
+      updateNumber();
+
+      setTimeout(function () {
+        drawGraphic();
+      }, 1000);
+    </script>
+  </body>
+</html>
