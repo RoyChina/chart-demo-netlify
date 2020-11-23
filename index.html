@@ -464,6 +464,21 @@
               zlevel: 100,
             },
             {
+              type: "rect",
+              position: [cord[0], 0],
+              shape: {
+                x: -30,
+                y: 0,
+                width: 60,
+                height: height,
+              },
+              style: {
+                fill: "transparent",
+              },
+              invisible: false,
+              draggable: false,
+            },
+            {
               type: "line",
               shape: {
                 x1: cord[0],
@@ -535,6 +550,7 @@
           xAxis: { axisPointer: { show: true } },
           graphic: [
             { position: cord },
+            { position: [cord[0], 0] },
             { style: { stroke: lineColor } },
             { style: { fill: lineColor } },
             { style: { fill: lineColor } },
@@ -551,6 +567,7 @@
           xAxis: { axisPointer: { show: false } },
           graphic: [
             { invisible: true },
+            {},
             { style: { stroke: lineColor2 } },
             { style: { fill: lineColor2 } },
             { style: { fill: lineColor2 } },
@@ -576,6 +593,7 @@
 
         myChart.setOption({
           graphic: [
+            {},
             {},
             {
               shape: {
