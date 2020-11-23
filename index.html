@@ -272,9 +272,10 @@
       var seeds = originData.map((i) => i[1]);
       var offset_ratios = [-1.5, -0.5, 0.5, 1.5];
       var values = matrixTransform(seeds, offset_ratios);
-      var data = values.map((value, setIndex) =>
+      var predict = values.map((value, setIndex) =>
         value.map((el, index) => [times[index], el])
       );
+      var data = [originData, ...predict];
       var $p = originData.findIndex(
         (i) => new Date(i[0]).getHours() === new Date().getHours()
       );
@@ -365,12 +366,12 @@
       }
 
       function genSeries($p) {
-        var dataSets = values.map((value, setIndex) =>
-          value.map((el, index) => ({
+        var dataSets = data.map((i, setIndex) =>
+          i.map((el, index) => ({
             name: times[index],
             value: [
               times[index],
-              Math.round($p - 1 === index ? values[0][index] : el),
+              Math.round($p - 1 === index ? data[0][index][1] : el[1]),
             ],
           }))
         );
@@ -396,7 +397,7 @@
               color: "#BCC1C9",
               width: strokeWidth,
             },
-            data: dataSets[1].filter((el, i) => i >= $p - 1),
+            data: dataSets[0].filter((el, i) => i >= $p - 1),
           },
           {
             name: "Forecasting2",
@@ -407,10 +408,21 @@
               color: "#BCC1C9",
               width: strokeWidth,
             },
-            data: dataSets[2].filter((el, i) => i >= $p - 1),
+            data: dataSets[1].filter((el, i) => i >= $p - 1),
           },
           {
             name: "Forecasting3",
+            type: "line",
+            showSymbol: false,
+            hoverAnimation: false,
+            lineStyle: {
+              color: "#BCC1C9",
+              width: strokeWidth,
+            },
+            data: dataSets[2].filter((el, i) => i >= $p - 1),
+          },
+          {
+            name: "Forecasting4",
             type: "line",
             showSymbol: false,
             hoverAnimation: false,
@@ -443,7 +455,7 @@
                 x: -handleSize / 2,
                 y: -handleSize / 2,
               },
-              invisible: false,
+              invisible: true,
               draggable: true,
               ondrag: onPointDragging,
               ondragend: onPointDragEnd,
@@ -595,6 +607,14 @@
       }
 
       myChart.setOption(option);
+
+      myChart.on("mouseover", "graphic", function () {
+        myChart.setOption({ graphic: [{ invisible: false }] });
+      });
+
+      myChart.on("mouseout", "graphic", function () {
+        myChart.setOption({ graphic: [{ invisible: true }] });
+      });
 
       window.addEventListener("resize", function () {
         drawGraphic();
