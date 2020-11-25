@@ -61,12 +61,16 @@
       #main {
         width: 100%;
         height: 400px;
-        border-bottom: 1px solid #ebebeb;
       }
       .chart-container {
         max-width: 1200px;
         margin: auto;
       }
+      .chart-padding {
+        border-top: 1px solid #ebebeb;
+        margin: 0px 40px;
+      }
+
       .chart-number {
         display: flex;
         justify-content: space-between;
@@ -79,7 +83,6 @@
         line-height: 22px;
         letter-spacing: 1px;
         text-transform: uppercase;
-        color: #5200ff;
         margin-top: 10px;
       }
       .cn-point {
@@ -88,7 +91,6 @@
         font-weight: bold;
         font-size: 80px;
         line-height: 80px;
-        color: #5200ff;
         display: flex;
         align-items: center;
       }
@@ -100,7 +102,6 @@
         font-style: normal;
         font-weight: normal;
         font-size: 30px;
-        color: #5200ff;
         height: 58px;
         display: flex;
         align-items: end;
@@ -153,7 +154,6 @@
         text-align: right;
         letter-spacing: 1px;
         text-transform: uppercase;
-        color: #5200ff;
         text-decoration: none;
         display: flex;
         align-items: center;
@@ -163,23 +163,31 @@
   <body>
     <div class="chart-container">
       <div id="main"></div>
-      <div class="chart-number">
-        <div class="cn-left">
-          <div class="cn-title">AS OF <span class="cn-time">2PM</span></div>
-          <div class="cn-point">
-            <span class="cn-number">70,4</span>
-            <div class="cn-unit">kWh</div>
-            <img
-              class="cn-arrow"
-              src="https://mystaidemo.wpengine.com/wp-content/themes/myst/img/arrow-top.svg"
-            />
+      <div class="chart-padding">
+        <div class="chart-number">
+          <div class="cn-left">
+            <div class="cn-title">AS OF <span class="cn-time">2PM</span></div>
+            <div class="cn-point">
+              <span class="cn-number">70,4</span>
+              <div class="cn-unit">kWh</div>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                height="58"
+                viewBox="0 0 14 25"
+                fill="none"
+                style="height: 58px"
+              >
+                <path d="M1 5.13793L6.8125 1L13 5.13793" />
+                <path d="M7 1L7 25" />
+              </svg>
+            </div>
           </div>
-        </div>
-        <div class="cn-tag">
-          <div class="b-tag-normal b-tag-active">
-            historical energy consumption
+          <div class="cn-tag">
+            <div class="b-tag-normal b-tag-active">
+              historical energy consumption
+            </div>
+            <div class="b-tag-normal">FORECASTING USING 4 MODELS</div>
           </div>
-          <div class="b-tag-normal">FORECASTING USING 4 MODELS</div>
         </div>
       </div>
     </div>
@@ -265,44 +273,35 @@
       var gap = 40;
       var strokeWidth = 1;
       var isDragging = false;
+      var disableEvent = false;
       var lineColor = "#5200FF";
       var lineColor2 = "rgba(94, 0, 255, 0.3)";
       var handleSize = 82;
       var times = originData.map((i) => i[0]);
       var seeds = originData.map((i) => i[1]);
       var offset_ratios = [-1.5, -0.5, 0.5, 1.5];
-      var values = matrixTransform(seeds, offset_ratios);
-      var predict = values.map((value, setIndex) =>
-        value.map((el, index) => [times[index], el])
-      );
-      var data = [originData, ...predict];
+      var max, min;
       var $p = originData.findIndex(
         (i) => new Date(i[0]).getHours() === new Date().getHours()
       );
+      var values = matrixTransform(seeds, offset_ratios);
+      var predict = getPredictData(values);
+      var data = [originData, ...predict];
 
       var option = {
         animation: true,
         tooltip: {
-          // triggerOn: "none",
           trigger: "axis",
-          backgroundColor: "rgba(245, 245, 245, 0.8)",
           padding: 10,
-          textStyle: {
-            color: "#5200FF",
-          },
-          formatter: (params) => {
-            return `AT ${formatLabelTime(params[0].axisValue)}${params
-              .map(
-                ({ value, seriesName }) => `<br/>${seriesName}: ${value[1]}kWh`
-              )
-              .join("")}`;
-          },
+          animation: false,
+          showContent: false,
+          transitionDuration: 0,
         },
         xAxis: {
           type: "category",
           axisPointer: {
+            snap: false,
             value: "6/11/2019 14:00",
-            snap: true,
             lineStyle: {
               color: "#6C727C",
               opacity: 0.5,
@@ -310,16 +309,6 @@
               type: "dashed",
             },
             itemStyle: { color: "#6C727C" },
-            // label: {
-            //   show: true,
-            //   formatter: function (params) {
-            //     return params.value;
-            //   },
-            //   backgroundColor: "#004E52",
-            // },
-            // handle: {
-            //   show: true,
-            // },
           },
           splitLine: {
             show: false,
@@ -335,113 +324,92 @@
           splitLine: {
             show: false,
           },
-          min: function (value) {
-            return value.min * 0.9;
-          },
-          max: function (value) {
-            return value.max * 1.1;
-          },
+          min,
+          max,
         },
         grid: {
-          left: 0,
+          left: gap,
           top: gap,
-          right: 0,
+          right: gap,
           bottom: gap,
         },
         series: genSeries($p),
       };
 
       function matrixTransform(s, o) {
-        return o.map((offset_ratio, index) =>
+        var x = s.slice();
+        var d = x.splice(0, $p);
+        var ret = o.map((offset_ratio, index) =>
           nj
-            .array(s)
+            .array(x)
             .add(
               nj
-                .arange(s.length)
+                .arange(x.length)
                 .multiply(offset_ratio)
-                .multiply(nj.random(s.length).multiply(70).add(45))
+                .multiply(nj.random(x.length).multiply(70).add(45))
             )
             .tolist()
         );
+
+        return ret.map((l) => d.concat(l));
       }
 
-      function genSeries($p) {
-        var dataSets = data.map((i, setIndex) =>
+      function getPredictData(values) {
+        return values.map((value, setIndex) =>
+          value.map((el, index) => {
+            if (!max && !min) max = min = el;
+            if (max < el) max = el;
+            if (min > el) min = el;
+            return [times[index], el];
+          })
+        );
+      }
+
+      function genSeries($p, onlyUpdateData) {
+        var dataSets = data.slice(1).map((i, setIndex) =>
           i.map((el, index) => ({
             name: times[index],
             value: [
               times[index],
-              Math.round($p - 1 === index ? data[0][index][1] : el[1]),
+              Math.round($p === index ? data[0][index][1] : el[1]),
             ],
+            symbol: "circle",
+            symbolSize: 5,
+            emphasis: {
+              itemStyle: { color: "#BCC1C9" },
+            },
           }))
         );
+        var predicts = dataSets.map((set, index) => ({
+          type: "line",
+          showSymbol: false,
+          hoverAnimation: false,
+          lineStyle: {
+            color: "#BCC1C9",
+            width: strokeWidth,
+          },
+          name: "Forecasting" + (index + 1),
+          data: set.filter((el, i) => i >= $p),
+        }));
         var series = [
           {
-            name: "History",
             type: "line",
             showSymbol: false,
             hoverAnimation: false,
+            animation: false,
             lineStyle: {
               color: "#5200FF",
               width: strokeWidth,
             },
-            // symbolSize: 200,
-            data: dataSets[0].filter((el, i) => i < $p),
+            data: dataSets[0].filter((el, i) => i < $p + 1),
           },
-          {
-            name: "Forecasting1",
-            type: "line",
-            showSymbol: false,
-            hoverAnimation: false,
-            lineStyle: {
-              color: "#BCC1C9",
-              width: strokeWidth,
-            },
-            data: dataSets[0].filter((el, i) => i >= $p - 1),
-          },
-          {
-            name: "Forecasting2",
-            type: "line",
-            showSymbol: false,
-            hoverAnimation: false,
-            lineStyle: {
-              color: "#BCC1C9",
-              width: strokeWidth,
-            },
-            data: dataSets[1].filter((el, i) => i >= $p - 1),
-          },
-          {
-            name: "Forecasting3",
-            type: "line",
-            showSymbol: false,
-            hoverAnimation: false,
-            lineStyle: {
-              color: "#BCC1C9",
-              width: strokeWidth,
-            },
-            data: dataSets[2].filter((el, i) => i >= $p - 1),
-          },
-          {
-            name: "Forecasting4",
-            type: "line",
-            showSymbol: false,
-            hoverAnimation: false,
-            lineStyle: {
-              color: "#BCC1C9",
-              width: strokeWidth,
-            },
-            data: dataSets[3].filter((el, i) => i >= $p - 1),
-          },
-        ];
+        ].concat(predicts);
         return series;
       }
 
       function drawGraphic() {
-        // Add shadow circles (which is not visible) to enable drag.
-
-        var cord = myChart.convertToPixel("grid", data[0][$p - 1]);
+        var cord = myChart.convertToPixel("grid", data[0][$p]);
         if (cord[0] === undefined) return;
-        // console.log("x,y", x, y);
         myChart.setOption({
           graphic: [
             {
@@ -542,10 +510,10 @@
       function onPointDragEnd() {
         isDragging = false;
         var cord = myChart.convertToPixel("grid", data[0][$p]);
+        if (cord[0] === undefined) return;
         myChart.setOption({
           graphic: [{ invisible: false }, {}],
         });
-        if (cord[0] === undefined) return;
         myChart.setOption({
           xAxis: { axisPointer: { show: true } },
           graphic: [
@@ -558,7 +526,19 @@
           ],
         });
 
-        updateNumber();
+        disableEvent = true;
+        const option = myChart.getOption();
+        myChart.clear();
+        values = matrixTransform(seeds, offset_ratios);
+        predict = getPredictData(values);
+        data = [originData, ...predict];
+        option.series = genSeries($p, true);
+        myChart.setOption(option);
+        setTimeout(() => {
+          disableEvent = false;
+        }, 1000);
+
+        updateLegend();
       }
 
       function onPointDragStart() {
@@ -581,13 +561,14 @@
         isDragging = true;
         // console.log("xIndex", xIndex);
         if (xIndex === $p) return;
+        $p = xIndex;
         if (xIndex < 0) {
           $p = 0;
         } else if (xIndex > originData.length) {
-          $p = originData.length;
-        } else {
-          $p = xIndex;
+          $p = originData.length - 1;
         }
+
+        if (data[0][$p] === undefined) return;
         var cord = myChart.convertToPixel("grid", data[0][$p]);
         if (cord[0] === undefined) return;
 
@@ -608,30 +589,71 @@
             { position: [cord[0], gap] },
             { position: [cord[0], height - gap] },
           ],
-          series: genSeries($p + 1),
+          series: genSeries($p),
         });
-        updateNumber();
+        updateLegend();
       }
 
-      function updateNumber() {
-        document.querySelector(
-          ".cn-number"
-        ).innerText = Number.prototype.toLocaleString.apply(
-          data[0][$p - 1][1] | 0
+      function updateLegend(seriesIndex, dataIndex) {
+        var index = seriesIndex || 0;
+        var dIndex =
+          index > 0 ? dataIndex + $p : dataIndex === undefined ? $p : dataIndex;
+        var leftActive =
+          (seriesIndex === undefined && dataIndex === undefined) ||
+          (index === 0 && $p === dIndex);
+        var rightActive = index < 1;
+        var activeColor = "#5200FF";
+        var inactiveColor = "#BCC1C9";
+        var leftColor = leftActive ? activeColor : inactiveColor;
+        var rightColor = rightActive ? activeColor : inactiveColor;
+
+        var cnNumberEl = document.querySelector(".cn-number");
+        var cnTimeEl = document.querySelector(".cn-time");
+
+        var tagNormalEl = document.querySelector(".b-tag-normal");
+        var tagEl = document.querySelector(".b-tag-active");
+
+        cnNumberEl.innerText = Number.prototype.toLocaleString.apply(
+          data[index][dIndex][1] | 0
         );
-        document.querySelector(".cn-time").innerText = formatLabelTime(
-          data[0][$p - 1][0]
-        );
+        cnTimeEl.innerText = formatLabelTime(data[index][dIndex][0]);
+        tagNormalEl.innerText = rightActive
+          ? "HISTORICAL ENERGY CONSUMPTION"
+          : "FORECASTED ENERGY CONSUMPTION";
+        tagNormalEl.style.color = rightColor;
+
+        document.querySelector(".cn-left").style.color = leftColor;
+        document.querySelector(".cn-point>svg").style.stroke = leftColor;
       }
 
       myChart.setOption(option);
 
+      myChart.on("mouseover", "series.line", function (event) {
+        if (disableEvent) return;
+        updateLegend(event.seriesIndex, event.dataIndex);
+      });
+
+      var lastSeriesIndex = -1,
+        lastDataIndex = -1;
+      myChart.on("updateAxisPointer", (event) => {
+        if (
+          lastSeriesIndex !== event.seriesIndex ||
+          lastDataIndex !== event.dataIndex
+        ) {
+          lastSeriesIndex = event.seriesIndex;
+          lastDataIndex = event.dataIndex;
+          updateLegend(event.seriesIndex, event.dataIndex);
+        }
+      });
+
       myChart.on("mouseover", "graphic", function () {
-        myChart.setOption({ graphic: [{ invisible: false }] });
+        if (disableEvent) return;
+        myChart.setOption({ graphic: [{ invisible: isDragging || false }] });
       });
 
       myChart.on("mouseout", "graphic", function () {
-        myChart.setOption({ graphic: [{ invisible: true }] });
+        if (disableEvent) return;
+        myChart.setOption({ graphic: [{ invisible: isDragging || true }] });
       });
 
       window.addEventListener("resize", function () {
@@ -639,7 +661,7 @@
         myChart.resize();
       });
 
-      updateNumber();
+      updateLegend();
 
       setTimeout(function () {
         drawGraphic();
