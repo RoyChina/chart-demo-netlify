@@ -652,10 +652,12 @@
         var legendTitleEl = document.querySelector(".legned-title");
         var legendNameEl = document.querySelector(".legned-name");
 
-        cnNumberEl.innerText = Number.prototype.toLocaleString.apply(
-          data[index][dIndex][1] | 0
-        );
-        cnTimeEl.innerText = formatLabelTime(data[index][dIndex][0]);
+        if (data[index][dIndex]) {
+          cnNumberEl.innerText = Number.prototype.toLocaleString.apply(
+            data[index][dIndex][1] | 0
+          );
+          cnTimeEl.innerText = formatLabelTime(data[index][dIndex][0]);
+        }
         legendTitleEl.innerText = rightActive
           ? "HISTORICAL ENERGY CONSUMPTION"
           : "FORECASTED ENERGY CONSUMPTION";
