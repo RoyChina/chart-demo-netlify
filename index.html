@@ -65,6 +65,7 @@
       .chart-container {
         max-width: 1200px;
         margin: auto;
+        overflow: hidden;
       }
       .chart-padding {
         border-top: 1px solid #ebebeb;
@@ -158,6 +159,40 @@
         display: flex;
         align-items: center;
       }
+
+      @media screen and (max-width: 768px) {
+        #main {
+          height: 200px;
+        }
+        .chart-padding {
+          margin: 10px;
+        }
+        .cn-title {
+          font-size: 12px;
+          line-height: 1;
+          height: 20px;
+        }
+        .cn-point {
+          margin-top: 30px;
+          font-size: 34px;
+          line-height: 1;
+          height: 30px;
+        }
+        .cn-point > svg {
+          height: 20px !important;
+        }
+        .cn-unit {
+          font-size: 14px;
+          line-height: 34px;
+          height: 24px;
+        }
+        .cn-tag {
+          width: 50%;
+        }
+        .b-tag-normal {
+          font-size: 12px;
+        }
+      }
     </style>
   </head>
   <body>
@@ -183,10 +218,12 @@
             </div>
           </div>
           <div class="cn-tag">
-            <div class="b-tag-normal b-tag-active">
+            <div class="b-tag-normal legned-title b-tag-active">
               historical energy consumption
             </div>
-            <div class="b-tag-normal">FORECASTING USING 4 MODELS</div>
+            <div class="b-tag-normal legned-name">
+              FORECASTING USING 4 MODELS
+            </div>
           </div>
         </div>
       </div>
@@ -269,14 +306,14 @@
       ];
 
       var myChart = echarts.init(document.getElementById("main"));
-      var height = 400;
-      var gap = 40;
+      var height = document.getElementById("main").offsetHeight;
+      var gap = height / 10;
+      var handleSize = height / 5;
       var strokeWidth = 1;
       var isDragging = false;
       var disableEvent = false;
       var lineColor = "#5200FF";
       var lineColor2 = "rgba(94, 0, 255, 0.3)";
-      var handleSize = 82;
       var times = originData.map((i) => i[0]);
       var seeds = originData.map((i) => i[1]);
       var offset_ratios = [-1.5, -0.5, 0.5, 1.5];
@@ -324,8 +361,8 @@
           splitLine: {
             show: false,
           },
-          min,
-          max,
+          min: min / 1.05,
+          max: max * 1.05,
         },
         grid: {
           left: gap,
@@ -366,7 +403,7 @@
       }
 
       function genSeries($p, onlyUpdateData) {
-        var dataSets = data.slice(1).map((i, setIndex) =>
+        var dataSets = data.map((i, setIndex) =>
           i.map((el, index) => ({
             name: times[index],
             value: [
@@ -374,13 +411,13 @@
               Math.round($p === index ? data[0][index][1] : el[1]),
             ],
             symbol: "circle",
-            symbolSize: 5,
+            symbolSize: 6,
             emphasis: {
               itemStyle: { color: "#BCC1C9" },
             },
           }))
         );
-        var predicts = dataSets.map((set, index) => ({
+        var predicts = dataSets.slice(1).map((set, index) => ({
           type: "line",
           showSymbol: false,
           hoverAnimation: false,
@@ -388,11 +425,12 @@
             color: "#BCC1C9",
             width: strokeWidth,
           },
-          name: "Forecasting" + (index + 1),
+          name: "FORECASTED MODEL " + (index + 1),
           data: set.filter((el, i) => i >= $p),
         }));
         var series = [
           {
+            name: "CUSTOMER DATA",
             type: "line",
             showSymbol: false,
             hoverAnimation: false,
@@ -414,7 +452,7 @@
           graphic: [
             {
               type: "image",
-              position: cord,
+              position: [cord[0], height / 2],
               style: {
                 // fill: "#5200FF",
                 image: "./handle.svg",
@@ -515,9 +553,9 @@
           graphic: [{ invisible: false }, {}],
         });
         myChart.setOption({
-          xAxis: { axisPointer: { show: true } },
+          xAxis: { axisPointer: { lineStyle: { opacity: 1 } } },
           graphic: [
-            { position: cord },
+            { position: [cord[0], height / 2] },
             { position: [cord[0], 0] },
             { style: { stroke: lineColor } },
             { style: { fill: lineColor } },
@@ -544,7 +582,7 @@
       function onPointDragStart() {
         isDragging = true;
         myChart.setOption({
-          xAxis: { axisPointer: { show: false } },
+          xAxis: { axisPointer: { lineStyle: { opacity: 0 } } },
           graphic: [
             { invisible: true },
             {},
@@ -603,24 +641,29 @@
           (index === 0 && $p === dIndex);
         var rightActive = index < 1;
         var activeColor = "#5200FF";
-        var inactiveColor = "#BCC1C9";
-        var leftColor = leftActive ? activeColor : inactiveColor;
+        var inactiveColor = "#6C727C";
+        var leftColor = rightActive ? activeColor : inactiveColor;
         var rightColor = rightActive ? activeColor : inactiveColor;
+        var series = myChart.getOption().series;
 
         var cnNumberEl = document.querySelector(".cn-number");
         var cnTimeEl = document.querySelector(".cn-time");
 
-        var tagNormalEl = document.querySelector(".b-tag-normal");
-        var tagEl = document.querySelector(".b-tag-active");
+        var legendTitleEl = document.querySelector(".legned-title");
+        var legendNameEl = document.querySelector(".legned-name");
 
         cnNumberEl.innerText = Number.prototype.toLocaleString.apply(
           data[index][dIndex][1] | 0
         );
         cnTimeEl.innerText = formatLabelTime(data[index][dIndex][0]);
-        tagNormalEl.innerText = rightActive
+        legendTitleEl.innerText = rightActive
           ? "HISTORICAL ENERGY CONSUMPTION"
           : "FORECASTED ENERGY CONSUMPTION";
-        tagNormalEl.style.color = rightColor;
+        legendTitleEl.style.color = rightColor;
+        if (series[seriesIndex]) {
+          legendNameEl.innerText = series[seriesIndex].name;
+        }
+        legendNameEl.style.color = rightColor;
 
         document.querySelector(".cn-left").style.color = leftColor;
         document.querySelector(".cn-point>svg").style.stroke = leftColor;
