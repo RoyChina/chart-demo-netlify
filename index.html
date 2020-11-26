@@ -169,11 +169,10 @@
         }
         .cn-title {
           font-size: 12px;
-          line-height: 1;
           height: 20px;
         }
         .cn-point {
-          margin-top: 30px;
+          margin-top: 23px;
           font-size: 34px;
           line-height: 1;
           height: 30px;
@@ -221,9 +220,7 @@
             <div class="b-tag-normal legned-title b-tag-active">
               historical energy consumption
             </div>
-            <div class="b-tag-normal legned-name">
-              FORECASTING USING 4 MODELS
-            </div>
+            <div class="b-tag-normal legned-name">CUSTOMER DATA</div>
           </div>
         </div>
       </div>
@@ -461,7 +458,7 @@
                 x: -handleSize / 2,
                 y: -handleSize / 2,
               },
-              invisible: true,
+              invisible: height < 300 ? false : true,
               draggable: true,
               ondrag: onPointDragging,
               ondragend: onPointDragEnd,
