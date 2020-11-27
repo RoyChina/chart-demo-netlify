@@ -302,412 +302,433 @@
         ["6/13/2019 12:00", 99000],
       ];
 
-      var myChart = echarts.init(document.getElementById("main"));
-      var height = document.getElementById("main").offsetHeight;
-      var gap = height / 10;
-      var handleSize = height / 5;
-      var strokeWidth = 1;
-      var isDragging = false;
-      var disableEvent = false;
-      var lineColor = "#5200FF";
-      var lineColor2 = "rgba(94, 0, 255, 0.3)";
-      var times = originData.map((i) => i[0]);
-      var seeds = originData.map((i) => i[1]);
-      var offset_ratios = [-1.5, -0.5, 0.5, 1.5];
-      var max, min;
-      var $p = originData.findIndex(
-        (i) => new Date(i[0]).getHours() === new Date().getHours()
-      );
-      var values = matrixTransform(seeds, offset_ratios);
-      var predict = getPredictData(values);
-      var data = [originData, ...predict];
+      function renderChart(params, elementId) {
+        var myChart = echarts.init(document.getElementById(elementId));
+        var height = document.getElementById(elementId).offsetHeight;
+        var gap = height / 10;
+        var handleSize = height / 5;
+        var strokeWidth = 1;
+        var isDragging = false;
+        var disableEvent = false;
+        var lineColor = "#5200FF";
+        var lineColor2 = "rgba(94, 0, 255, 0.3)";
+        var times = originData.map(function (i) {
+          return i[0];
+        });
+        var seeds = originData.map(function (i) {
+          return i[1];
+        });
+        var offset_ratios = [-1.5, -0.5, 0.5, 1.5];
+        var max, min;
+        var $p = originData.findIndex(function (i) {
+          return new Date(i[0]).getHours() === new Date().getHours();
+        });
+        var values = matrixTransform(seeds, offset_ratios);
+        var predict = getPredictData(values);
+        var data = [originData].concat(predict);
 
-      var option = {
-        animation: true,
-        tooltip: {
-          trigger: "axis",
-          padding: 10,
-          animation: false,
-          showContent: false,
-          transitionDuration: 0,
-        },
-        xAxis: {
-          type: "category",
-          axisPointer: {
-            snap: false,
-            value: "6/11/2019 14:00",
-            lineStyle: {
-              color: "#6C727C",
-              opacity: 0.5,
-              width: 1,
-              type: "dashed",
-            },
-            itemStyle: { color: "#6C727C" },
-          },
-          splitLine: {
-            show: false,
-          },
-          axisLabel: false,
-          axisLine: false,
-          axisTick: false,
-        },
-        yAxis: {
-          type: "value",
-          boundaryGap: [0, "100%"],
-          show: false,
-          splitLine: {
-            show: false,
-          },
-          min: min / 1.05,
-          max: max * 1.05,
-        },
-        grid: {
-          left: gap,
-          top: gap,
-          right: gap,
-          bottom: gap,
-        },
-        series: genSeries($p),
-      };
-
-      function matrixTransform(s, o) {
-        var x = s.slice();
-        var d = x.splice(0, $p);
-        var ret = o.map((offset_ratio, index) =>
-          nj
-            .array(x)
-            .add(
-              nj
-                .arange(x.length)
-                .multiply(offset_ratio)
-                .multiply(nj.random(x.length).multiply(70).add(45))
-            )
-            .tolist()
-        );
-
-        return ret.map((l) => d.concat(l));
-      }
-
-      function getPredictData(values) {
-        return values.map((value, setIndex) =>
-          value.map((el, index) => {
-            if (!max && !min) max = min = el;
-            if (max < el) max = el;
-            if (min > el) min = el;
-            return [times[index], el];
-          })
-        );
-      }
-
-      function genSeries($p, onlyUpdateData) {
-        var dataSets = data.map((i, setIndex) =>
-          i.map((el, index) => ({
-            name: times[index],
-            value: [
-              times[index],
-              Math.round($p === index ? data[0][index][1] : el[1]),
-            ],
-            symbol: "circle",
-            symbolSize: 6,
-            emphasis: {
-              itemStyle: { color: "#BCC1C9" },
-            },
-          }))
-        );
-        var predicts = dataSets.slice(1).map((set, index) => ({
-          type: "line",
-          showSymbol: false,
-          hoverAnimation: false,
-          lineStyle: {
-            color: "#BCC1C9",
-            width: strokeWidth,
-          },
-          name: "FORECASTED MODEL " + (index + 1),
-          data: set.filter((el, i) => i >= $p),
-        }));
-        var series = [
-          {
-            name: "CUSTOMER DATA",
-            type: "line",
-            showSymbol: false,
-            hoverAnimation: false,
+        var option = {
+          animation: true,
+          tooltip: {
+            trigger: "axis",
+            padding: 10,
             animation: false,
-            lineStyle: {
-              color: "#5200FF",
-              width: strokeWidth,
-            },
-            data: dataSets[0].filter((el, i) => i < $p + 1),
+            showContent: false,
+            transitionDuration: 0,
           },
-        ].concat(predicts);
-        return series;
-      }
-
-      function drawGraphic() {
-        var cord = myChart.convertToPixel("grid", data[0][$p]);
-        if (cord[0] === undefined) return;
-        myChart.setOption({
-          graphic: [
-            {
-              type: "image",
-              position: [cord[0], height / 2],
-              style: {
-                // fill: "#5200FF",
-                image: "./handle.svg",
-                width: handleSize,
-                height: handleSize,
-                x: -handleSize / 2,
-                y: -handleSize / 2,
+          xAxis: {
+            type: "category",
+            axisPointer: {
+              snap: false,
+              value: "6/11/2019 14:00",
+              lineStyle: {
+                color: "#6C727C",
+                opacity: 0.5,
+                width: 1,
+                type: "dashed",
               },
-              invisible: height < 300 ? false : true,
-              draggable: true,
-              ondrag: onPointDragging,
-              ondragend: onPointDragEnd,
-              ondragstart: onPointDragStart,
-              z: 100,
-              zlevel: 100,
+              itemStyle: { color: "#6C727C" },
             },
-            {
-              type: "rect",
-              position: [cord[0], 0],
-              shape: {
-                x: -30,
-                y: 0,
-                width: 60,
-                height: height,
-              },
-              style: {
-                fill: "transparent",
-              },
-              invisible: false,
-              draggable: false,
+            splitLine: {
+              show: false,
             },
-            {
-              type: "line",
-              shape: {
-                x1: cord[0],
-                y1: gap,
-                x2: cord[0],
-                y2: height - gap,
-              },
-              style: { stroke: lineColor, lineWidth: strokeWidth },
-              invisible: false,
-              draggable: false,
+            axisLabel: false,
+            axisLine: false,
+            axisTick: false,
+          },
+          yAxis: {
+            type: "value",
+            boundaryGap: [0, "100%"],
+            show: false,
+            splitLine: {
+              show: false,
             },
-            {
-              type: "text",
-              position: [cord[0] - 10, height - gap + 10],
-              bounding: "all",
-              style: {
-                text: formatLabelTime(data[0][$p - 1][0]),
-                fill: lineColor,
-              },
-              font: "IBM Plex Mono",
-              invisible: false,
-              draggable: false,
-            },
-            {
-              type: "circle",
-              position: [cord[0], gap],
-              shape: {
-                cx: 0,
-                cy: 0,
-                r: 3,
-              },
-              style: {
-                fill: "#5200FF",
-              },
-              invisible: false,
-              draggable: true,
-            },
-            {
-              type: "circle",
-              position: [cord[0], height - gap],
-              shape: {
-                cx: 0,
-                cy: 0,
-                r: 3,
-              },
-              style: {
-                fill: "#5200FF",
-              },
-              invisible: false,
-              draggable: true,
-            },
-          ],
-        });
-      }
-
-      function formatLabelTime(timestr) {
-        const hour = new Date(timestr).getHours();
-        return hour > 12 ? hour - 12 + "PM" : hour + "AM";
-      }
-
-      function onPointDragEnd() {
-        isDragging = false;
-        var cord = myChart.convertToPixel("grid", data[0][$p]);
-        if (cord[0] === undefined) return;
-        myChart.setOption({
-          graphic: [{ invisible: false }, {}],
-        });
-        myChart.setOption({
-          xAxis: { axisPointer: { lineStyle: { opacity: 1 } } },
-          graphic: [
-            { position: [cord[0], height / 2] },
-            { position: [cord[0], 0] },
-            { style: { stroke: lineColor } },
-            { style: { fill: lineColor } },
-            { style: { fill: lineColor } },
-            { style: { fill: lineColor } },
-          ],
-        });
-
-        disableEvent = true;
-        const option = myChart.getOption();
-        myChart.clear();
-        values = matrixTransform(seeds, offset_ratios);
-        predict = getPredictData(values);
-        data = [originData, ...predict];
-        option.series = genSeries($p, true);
-        myChart.setOption(option);
-        setTimeout(() => {
-          disableEvent = false;
-        }, 1000);
-
-        updateLegend();
-      }
-
-      function onPointDragStart() {
-        isDragging = true;
-        myChart.setOption({
-          xAxis: { axisPointer: { lineStyle: { opacity: 0 } } },
-          graphic: [
-            { invisible: true },
-            {},
-            { style: { stroke: lineColor2 } },
-            { style: { fill: lineColor2 } },
-            { style: { fill: lineColor2 } },
-            { style: { fill: lineColor2 } },
-          ],
-        });
-      }
-
-      function onPointDragging() {
-        var [xIndex] = myChart.convertFromPixel("grid", this.position);
-        isDragging = true;
-        // console.log("xIndex", xIndex);
-        if (xIndex === $p) return;
-        $p = xIndex;
-        if (xIndex < 0) {
-          $p = 0;
-        } else if (xIndex > originData.length) {
-          $p = originData.length - 1;
-        }
-
-        if (data[0][$p] === undefined) return;
-        var cord = myChart.convertToPixel("grid", data[0][$p]);
-        if (cord[0] === undefined) return;
-
-        myChart.setOption({
-          graphic: [
-            {},
-            {},
-            {
-              shape: {
-                x1: cord[0],
-                x2: cord[0],
-              },
-            },
-            {
-              position: [cord[0] - 10, height - gap + 10],
-              style: { text: formatLabelTime(data[0][$p][0]) },
-            },
-            { position: [cord[0], gap] },
-            { position: [cord[0], height - gap] },
-          ],
+            min: min / 1.05,
+            max: max * 1.05,
+          },
+          grid: {
+            left: gap,
+            top: gap,
+            right: gap,
+            bottom: gap,
+          },
           series: genSeries($p),
-        });
-        updateLegend();
-      }
+        };
 
-      function updateLegend(seriesIndex, dataIndex) {
-        var index = seriesIndex || 0;
-        var dIndex =
-          index > 0 ? dataIndex + $p : dataIndex === undefined ? $p : dataIndex;
-        var leftActive =
-          (seriesIndex === undefined && dataIndex === undefined) ||
-          (index === 0 && $p === dIndex);
-        var rightActive = index < 1;
-        var activeColor = "#5200FF";
-        var inactiveColor = "#6C727C";
-        var leftColor = rightActive ? activeColor : inactiveColor;
-        var rightColor = rightActive ? activeColor : inactiveColor;
-        var series = myChart.getOption().series;
-
-        var cnNumberEl = document.querySelector(".cn-number");
-        var cnTimeEl = document.querySelector(".cn-time");
-
-        var legendTitleEl = document.querySelector(".legned-title");
-        var legendNameEl = document.querySelector(".legned-name");
-
-        if (data[index][dIndex]) {
-          cnNumberEl.innerText = Number.prototype.toLocaleString.apply(
-            data[index][dIndex][1] | 0
-          );
-          cnTimeEl.innerText = formatLabelTime(data[index][dIndex][0]);
+        function matrixTransform(s, o) {
+          var x = s.slice();
+          var d = x.splice(0, $p);
+          var ret = o.map(function (offset_ratio, index) {
+            return nj
+              .array(x)
+              .add(
+                nj
+                  .arange(x.length)
+                  .multiply(offset_ratio)
+                  .multiply(nj.random(x.length).multiply(70).add(45))
+              )
+              .tolist();
+          });
+          return ret.map(function (l) {
+            return d.concat(l);
+          });
         }
-        legendTitleEl.innerText = rightActive
-          ? "HISTORICAL ENERGY CONSUMPTION"
-          : "FORECASTED ENERGY CONSUMPTION";
-        legendTitleEl.style.color = rightColor;
-        if (series[seriesIndex]) {
-          legendNameEl.innerText = series[seriesIndex].name;
+
+        function getPredictData(values) {
+          return values.map(function (value, setIndex) {
+            return value.map(function (el, index) {
+              if (!max && !min) max = min = el;
+              if (max < el) max = el;
+              if (min > el) min = el;
+              return [times[index], el];
+            });
+          });
         }
-        legendNameEl.style.color = rightColor;
 
-        document.querySelector(".cn-left").style.color = leftColor;
-        document.querySelector(".cn-point>svg").style.stroke = leftColor;
-      }
+        function genSeries($p, onlyUpdateData) {
+          var dataSets = data.map(function (i, setIndex) {
+            return i.map(function (el, index) {
+              return {
+                name: times[index],
+                value: [
+                  times[index],
+                  Math.round($p === index ? data[0][index][1] : el[1]),
+                ],
+                symbol: "circle",
+                symbolSize: 6,
+                emphasis: {
+                  itemStyle: { color: "#BCC1C9" },
+                },
+              };
+            });
+          });
+          var predicts = dataSets.slice(1).map(function (set, index) {
+            return {
+              type: "line",
+              showSymbol: false,
+              hoverAnimation: false,
+              lineStyle: {
+                color: "#BCC1C9",
+                width: strokeWidth,
+              },
+              name: "FORECASTED MODEL " + (index + 1),
+              data: set.filter(function (el, i) {
+                return i >= $p;
+              }),
+            };
+          });
+          var series = [
+            {
+              name: "CUSTOMER DATA",
+              type: "line",
+              showSymbol: false,
+              hoverAnimation: false,
+              animation: false,
+              lineStyle: {
+                color: "#5200FF",
+                width: strokeWidth,
+              },
+              data: dataSets[0].filter(function (el, i) {
+                return i < $p + 1;
+              }),
+            },
+          ].concat(predicts);
+          return series;
+        }
 
-      myChart.setOption(option);
+        function drawGraphic() {
+          var cord = myChart.convertToPixel("grid", data[0][$p]);
+          if (cord[0] === undefined) return;
+          myChart.setOption({
+            graphic: [
+              {
+                type: "image",
+                position: [cord[0], height / 2],
+                style: {
+                  // fill: "#5200FF",
+                  image: "./handle.svg",
+                  width: handleSize,
+                  height: handleSize,
+                  x: -handleSize / 2,
+                  y: -handleSize / 2,
+                },
+                invisible: height < 300 ? false : true,
+                draggable: true,
+                ondrag: onPointDragging,
+                ondragend: onPointDragEnd,
+                ondragstart: onPointDragStart,
+                z: 100,
+                zlevel: 100,
+              },
+              {
+                type: "rect",
+                position: [cord[0], 0],
+                shape: {
+                  x: -30,
+                  y: 0,
+                  width: 60,
+                  height: height,
+                },
+                style: {
+                  fill: "transparent",
+                },
+                invisible: false,
+                draggable: false,
+              },
+              {
+                type: "line",
+                shape: {
+                  x1: cord[0],
+                  y1: gap,
+                  x2: cord[0],
+                  y2: height - gap,
+                },
+                style: { stroke: lineColor, lineWidth: strokeWidth },
+                invisible: false,
+                draggable: false,
+              },
+              {
+                type: "text",
+                position: [cord[0] - 10, height - gap + 10],
+                bounding: "all",
+                style: {
+                  text: formatLabelTime(data[0][$p][0]),
+                  fill: lineColor,
+                },
+                font: "IBM Plex Mono",
+                invisible: false,
+                draggable: false,
+              },
+              {
+                type: "circle",
+                position: [cord[0], gap],
+                shape: {
+                  cx: 0,
+                  cy: 0,
+                  r: 3,
+                },
+                style: {
+                  fill: "#5200FF",
+                },
+                invisible: false,
+                draggable: true,
+              },
+              {
+                type: "circle",
+                position: [cord[0], height - gap],
+                shape: {
+                  cx: 0,
+                  cy: 0,
+                  r: 3,
+                },
+                style: {
+                  fill: "#5200FF",
+                },
+                invisible: false,
+                draggable: true,
+              },
+            ],
+          });
+        }
 
-      myChart.on("mouseover", "series.line", function (event) {
-        if (disableEvent) return;
-        updateLegend(event.seriesIndex, event.dataIndex);
-      });
+        function formatLabelTime(timestr) {
+          const hour = new Date(timestr).getHours();
+          return hour > 12 ? hour - 12 + "PM" : hour + "AM";
+        }
 
-      var lastSeriesIndex = -1,
-        lastDataIndex = -1;
-      myChart.on("updateAxisPointer", (event) => {
-        if (
-          lastSeriesIndex !== event.seriesIndex ||
-          lastDataIndex !== event.dataIndex
-        ) {
-          lastSeriesIndex = event.seriesIndex;
-          lastDataIndex = event.dataIndex;
+        function onPointDragEnd() {
+          isDragging = false;
+          var cord = myChart.convertToPixel("grid", data[0][$p]);
+          if (cord[0] === undefined) return;
+          myChart.setOption({
+            graphic: [{ invisible: false }, {}],
+          });
+          myChart.setOption({
+            xAxis: { axisPointer: { lineStyle: { opacity: 1 } } },
+            graphic: [
+              { position: [cord[0], height / 2] },
+              { position: [cord[0], 0] },
+              { style: { stroke: lineColor } },
+              { style: { fill: lineColor } },
+              { style: { fill: lineColor } },
+              { style: { fill: lineColor } },
+            ],
+          });
+
+          disableEvent = true;
+          const option = myChart.getOption();
+          myChart.clear();
+          values = matrixTransform(seeds, offset_ratios);
+          predict = getPredictData(values);
+          data = [originData].concat(predict);
+          option.series = genSeries($p, true);
+          myChart.setOption(option);
+          setTimeout(function () {
+            disableEvent = false;
+          }, 1000);
+
+          updateLegend();
+        }
+
+        function onPointDragStart() {
+          isDragging = true;
+          myChart.setOption({
+            xAxis: { axisPointer: { lineStyle: { opacity: 0 } } },
+            graphic: [
+              { invisible: true },
+              {},
+              { style: { stroke: lineColor2 } },
+              { style: { fill: lineColor2 } },
+              { style: { fill: lineColor2 } },
+              { style: { fill: lineColor2 } },
+            ],
+          });
+        }
+
+        function onPointDragging() {
+          var xIndex = myChart.convertFromPixel("grid", this.position)[0];
+          isDragging = true;
+          // console.log("xIndex", xIndex);
+          if (xIndex === $p) return;
+          $p = xIndex;
+          if (xIndex < 0) {
+            $p = 0;
+          } else if (xIndex > originData.length) {
+            $p = originData.length - 1;
+          }
+
+          if (data[0][$p] === undefined) return;
+          var cord = myChart.convertToPixel("grid", data[0][$p]);
+          if (cord[0] === undefined) return;
+
+          myChart.setOption({
+            graphic: [
+              {},
+              {},
+              {
+                shape: {
+                  x1: cord[0],
+                  x2: cord[0],
+                },
+              },
+              {
+                position: [cord[0] - 10, height - gap + 10],
+                style: { text: formatLabelTime(data[0][$p][0]) },
+              },
+              { position: [cord[0], gap] },
+              { position: [cord[0], height - gap] },
+            ],
+            series: genSeries($p),
+          });
+          updateLegend();
+        }
+
+        function updateLegend(seriesIndex, dataIndex) {
+          var index = seriesIndex || 0;
+          var dIndex =
+            index > 0
+              ? dataIndex + $p
+              : dataIndex === undefined
+              ? $p
+              : dataIndex;
+          var leftActive =
+            (seriesIndex === undefined && dataIndex === undefined) ||
+            (index === 0 && $p === dIndex);
+          var rightActive = index < 1;
+          var activeColor = "#5200FF";
+          var inactiveColor = "#6C727C";
+          var leftColor = rightActive ? activeColor : inactiveColor;
+          var rightColor = rightActive ? activeColor : inactiveColor;
+          var series = myChart.getOption().series;
+
+          var cnNumberEl = document.querySelector(".cn-number");
+          var cnTimeEl = document.querySelector(".cn-time");
+
+          var legendTitleEl = document.querySelector(".legned-title");
+          var legendNameEl = document.querySelector(".legned-name");
+
+          if (data[index][dIndex]) {
+            cnNumberEl.innerText = Number.prototype.toLocaleString.apply(
+              data[index][dIndex][1] | 0
+            );
+            cnTimeEl.innerText = formatLabelTime(data[index][dIndex][0]);
+          }
+          legendTitleEl.innerText = rightActive
+            ? "HISTORICAL ENERGY CONSUMPTION"
+            : "FORECASTED ENERGY CONSUMPTION";
+          legendTitleEl.style.color = rightColor;
+          if (series[seriesIndex]) {
+            legendNameEl.innerText = series[seriesIndex].name;
+          }
+          legendNameEl.style.color = rightColor;
+
+          document.querySelector(".cn-left").style.color = leftColor;
+          document.querySelector(".cn-point>svg").style.stroke = leftColor;
+        }
+
+        myChart.setOption(option);
+
+        myChart.on("mouseover", "series.line", function (event) {
+          if (disableEvent) return;
           updateLegend(event.seriesIndex, event.dataIndex);
-        }
-      });
+        });
 
-      myChart.on("mouseover", "graphic", function () {
-        if (disableEvent) return;
-        myChart.setOption({ graphic: [{ invisible: isDragging || false }] });
-      });
+        var lastSeriesIndex = -1,
+          lastDataIndex = -1;
+        myChart.on("updateAxisPointer", function (event) {
+          if (
+            lastSeriesIndex !== event.seriesIndex ||
+            lastDataIndex !== event.dataIndex
+          ) {
+            lastSeriesIndex = event.seriesIndex;
+            lastDataIndex = event.dataIndex;
+            updateLegend(event.seriesIndex, event.dataIndex);
+          }
+        });
 
-      myChart.on("mouseout", "graphic", function () {
-        if (disableEvent) return;
-        myChart.setOption({ graphic: [{ invisible: isDragging || true }] });
-      });
+        myChart.on("mouseover", "graphic", function () {
+          if (disableEvent) return;
+          myChart.setOption({ graphic: [{ invisible: isDragging || false }] });
+        });
 
-      window.addEventListener("resize", function () {
-        drawGraphic();
-        myChart.resize();
-      });
+        myChart.on("mouseout", "graphic", function () {
+          if (disableEvent) return;
+          myChart.setOption({ graphic: [{ invisible: isDragging || true }] });
+        });
 
-      updateLegend();
+        window.addEventListener("resize", function () {
+          drawGraphic();
+          myChart.resize();
+        });
 
-      setTimeout(function () {
-        drawGraphic();
-      }, 1000);
+        updateLegend();
+
+        setTimeout(function () {
+          drawGraphic();
+        }, 1000);
+      }
+
+      renderChart(originData, "main");
     </script>
   </body>
 </html>
